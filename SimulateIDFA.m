@@ -116,7 +116,7 @@ static NSString *systemHardwareInfo(){
 
 static NSString *systemFileTime(){
     NSFileManager *file = [NSFileManager defaultManager];
-    NSDictionary *dic= [file attributesOfItemAtPath:@"System/Library/CoreServices" error:nil];
+    NSDictionary *dic= [file attributesOfItemAtPath:@"/private/var/mobile" error:nil];
     return [NSString stringWithFormat:@"%@,%@",[dic objectForKey:NSFileCreationDate],[dic objectForKey:NSFileModificationDate]];
 }
 
