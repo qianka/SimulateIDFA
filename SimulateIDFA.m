@@ -78,30 +78,43 @@ static NSUInteger getSysInfo(uint typeSpecifier) {
     return (NSUInteger) results;
 }
 
-static NSString *carrierInfo() {
+static NSString *carrierDescription(CTCarrier* carrier) {
     NSMutableString* cInfo = [NSMutableString string];
-    
-    CTTelephonyNetworkInfo *networkInfo = [[CTTelephonyNetworkInfo alloc] init];
-    CTCarrier *carrier = [networkInfo subscriberCellularProvider];
-    
+    if (carrier == nil) {
+        return @"";
+    }
     NSString *carrierName = [carrier carrierName];
     if (carrierName != nil){
         [cInfo appendString:carrierName];
     }
-    
     NSString *mcc = [carrier mobileCountryCode];
     if (mcc != nil){
         [cInfo appendString:mcc];
     }
-    
     NSString *mnc = [carrier mobileNetworkCode];
     if (mnc != nil){
         [cInfo appendString:mnc];
     }
-    
     return cInfo;
 }
 
+static NSString *carrierInfo() {
+    // iOS12 以上 遍历 serviceSubscriberCellularProviders
+    // 以下，直接取 subscriberCellularProvider
+    NSMutableString *result = [NSMutableString string];
+    CTTelephonyNetworkInfo *networkInfo = [[CTTelephonyNetworkInfo alloc] init];
+    
+    if (@available(iOS 12.0, *)) {
+        NSDictionary *serviceSubscriberCellularProviders = networkInfo.serviceSubscriberCellularProviders;
+        for (NSString* key in [serviceSubscriberCellularProviders.allKeys sortedArrayUsingSelector:@selector(localizedStandardCompare:)]) {
+            // 此处按 localizedStandardCompare 顺序排序
+            [result appendString:carrierDescription(serviceSubscriberCellularProviders[key])];
+        }
+    } else {
+        [result appendString:carrierDescription(networkInfo.subscriberCellularProvider)];
+    }
+    return result;
+}
 
 static NSString *systemHardwareInfo(){
     NSString *model = getSystemHardwareByName(SIDFAModel);
@@ -111,7 +124,6 @@ static NSString *systemHardwareInfo(){
     
     return [NSString stringWithFormat:@"%@,%@,%@,%td",model,machine,carInfo,totalMemory];
 }
-
 
 
 static NSString *systemFileTime(){
